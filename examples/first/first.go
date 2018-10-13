@@ -48,7 +48,11 @@ func messageReceived(msng *messenger.Messenger, userID int64, m messenger.Facebo
 
 		// ok, message is ready, lets send
 		msng.SendMessage(gm)
-
+	case "send me a button":
+		gm := msng.NewButtonMessage(userID, "Hi there")
+		btn := msng.NewWebURLButton("Click me", "http://example.com")
+		gm.AddNewButton(btn)
+		msng.SendMessage(gm)
 	default:
 		// upthere we haven't check for errors and responses for cleaner example code
 		// but keep in mind that SendMessage returns FacebookResponse struct and error

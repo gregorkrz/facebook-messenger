@@ -19,6 +19,7 @@ type Message interface {
 
 func (m TextMessage) foo()    {} // Message interface
 func (m GenericMessage) foo() {} // Message interface
+func (m ButtonMessage) foo()  {} // Message interface
 
 const (
 	// ButtonTypeWebURL is type for web links
@@ -57,6 +58,14 @@ type GenericMessage struct {
 	NotificationType NotificationType      `json:"notification_type,omitempty"`
 }
 
+// ButtonMessage struct used for sending button messages (text message + buttons)
+// This struct is the same as GenericMessage, only that in this one the payload is a bit different
+type ButtonMessage struct {
+	Message          genericMessageContent `json:"message"`
+	Recipient        recipient             `json:"recipient"`
+	NotificationType NotificationType      `json:"notification_type,omitempty"`
+}
+
 type recipient struct {
 	ID int64 `json:"id,string"`
 }
@@ -74,9 +83,13 @@ type attachment struct {
 	Payload payload `json:"payload,omitempty"`
 }
 
+// The same struct for both ButtonMessage and GenericMessage,
+// only that ButtonMessage contains message text and array of buttons instead of array of elements
 type payload struct {
 	TemplateType string    `json:"template_type,omitempty"`
-	Elements     []Element `json:"elements,omitempty"`
+	Elements     []Element `json:"elements,omitempty"` // only used with GenericMessage
+	Text         string    `json:"text,omitempty"`     // only used with ButtonMessage
+	Buttons      []Button  `json:"buttons,omitempty"`  // only used with ButtonMessage
 }
 
 // Element in Generic Message template attachment
@@ -120,6 +133,20 @@ func (msng Messenger) NewGenericMessage(userID int64) GenericMessage {
 	}
 }
 
+// NewButtonMessage creates new Button Template message for userID
+//
+func (msng Messenger) NewButtonMessage(userID int64, message string) ButtonMessage {
+	return ButtonMessage{
+		Recipient: recipient{ID: userID},
+		Message: genericMessageContent{
+			Attachment: &attachment{
+				Type:    "template",
+				Payload: payload{TemplateType: "button", Text: message},
+			},
+		},
+	}
+}
+
 // AddNewElement adds element to Generic template message with defined title, subtitle, link url and image url
 // Title param is mandatory. If not used set "" for other params and nil for buttons param
 // Generic messages can have up to 10 elements which are scolled horizontaly in Facebook messenger
@@ -131,6 +158,12 @@ func (m *GenericMessage) AddNewElement(title, subtitle, itemURL, imageURL string
 // Generic messages can have up to 10 elements which are scolled horizontaly in Facebook messenger
 func (m *GenericMessage) AddElement(e Element) {
 	m.Message.Attachment.Payload.Elements = append(m.Message.Attachment.Payload.Elements, e)
+}
+
+// AddNewButton adds button b to ButtonMessage
+// Button messages can have up to 3 buttons attached to the text
+func (m *ButtonMessage) AddNewButton(b Button) {
+	m.Message.Attachment.Payload.Buttons = append(m.Message.Attachment.Payload.Buttons, b)
 }
 
 // NewElement creates new element with defined title, subtitle, link url and image url
