@@ -31,6 +31,8 @@ type Messenger struct {
 	// PostbackReceived event fires when postback received from Facebook server
 	// Omit (nil) if you don't use postbacks and you don't want to manage this events
 	PostbackReceived func(msng *Messenger, userID int64, p FacebookPostback)
+
+	ErrorReportingFunction func(err error)
 }
 
 // New creates new messenger instance
@@ -59,10 +61,14 @@ func (msng *Messenger) SendMessage(m Message) (FacebookResponse, error) {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
+		go msng.ErrorReportingFunction(err)
 		return FacebookResponse{}, err
 	}
-
-	return decodeResponse(resp)
+	decoded, err := decodeResponse(resp)
+	if err != nil {
+		go msng.ErrorReportingFunction(err)
+	}
+	return decoded, err
 }
 
 // SendTextMessage sends text messate to receiverID
