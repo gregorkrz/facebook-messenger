@@ -2,6 +2,7 @@ package messenger
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -22,15 +23,15 @@ type Messenger struct {
 	pageURL string
 
 	// MessageReceived event fires when message from Facebook received
-	MessageReceived func(msng *Messenger, userID int64, m FacebookMessage)
+	MessageReceived func(ctx context.Context, msng *Messenger, userID int64, m FacebookMessage)
 
 	// DeliveryReceived event fires when delivery report from Facebook received
 	// Omit (nil) if you don't want to manage this events
-	DeliveryReceived func(msng *Messenger, userI int64, d FacebookDelivery)
+	DeliveryReceived func(ctx context.Context, msng *Messenger, userI int64, d FacebookDelivery)
 
 	// PostbackReceived event fires when postback received from Facebook server
 	// Omit (nil) if you don't use postbacks and you don't want to manage this events
-	PostbackReceived func(msng *Messenger, userID int64, p FacebookPostback)
+	PostbackReceived func(ctx context.Context, msng *Messenger, userID int64, p FacebookPostback)
 
 	ErrorReportingFunction func(err error)
 }
@@ -88,13 +89,13 @@ func (msng *Messenger) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			userID := msg.Sender.ID
 			switch {
 			case msg.Message != nil && msng.MessageReceived != nil:
-				go msng.MessageReceived(msng, userID, *msg.Message)
+				go msng.MessageReceived(r.Context(), msng, userID, *msg.Message)
 
 			case msg.Delivery != nil && msng.DeliveryReceived != nil:
-				go msng.DeliveryReceived(msng, userID, *msg.Delivery)
+				go msng.DeliveryReceived(r.Context(), msng, userID, *msg.Delivery)
 
 			case msg.Postback != nil && msng.PostbackReceived != nil:
-				go msng.PostbackReceived(msng, userID, *msg.Postback)
+				go msng.PostbackReceived(r.Context(), msng, userID, *msg.Postback)
 			}
 		}
 	}
