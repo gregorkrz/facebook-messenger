@@ -62,12 +62,12 @@ func (msng *Messenger) SendMessage(m Message) (FacebookResponse, error) {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		go msng.ErrorReportingFunction(err)
+		msng.ErrorReportingFunction(err)
 		return FacebookResponse{}, err
 	}
 	decoded, err := decodeResponse(resp)
 	if err != nil {
-		go msng.ErrorReportingFunction(err)
+		msng.ErrorReportingFunction(err)
 	}
 	return decoded, err
 }
