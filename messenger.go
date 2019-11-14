@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"time"
 )
 
 const apiURL = "https://graph.facebook.com/v2.6/"
@@ -59,7 +60,7 @@ func (msng *Messenger) SendMessage(m Message) (FacebookResponse, error) {
 	req, err := http.NewRequest("POST", msng.apiURL, bytes.NewBuffer(s))
 	req.Header.Set("Content-Type", "application/json")
 
-	client := &http.Client{}
+	client := &http.Client{Timeout: 5 * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
 		msng.ErrorReportingFunction(err)

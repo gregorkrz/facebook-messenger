@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"time"
 )
 
 // Welcome struct used for setting messenger welcome message
@@ -62,7 +63,7 @@ func (msng *Messenger) setWelcome(m interface{}) error {
 	req, err := http.NewRequest("POST", msng.pageURL, bytes.NewBuffer(s))
 	req.Header.Set("Content-Type", "application/json")
 
-	client := &http.Client{}
+	client := &http.Client{Timeout: 5 * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
 		return err
